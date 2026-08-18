@@ -171,16 +171,18 @@ def analyze_vascular_graft_mechanical_compliance(
     systolic_pressure=120,
     diastolic_pressure=80,
     burst_pressure=None,
-    target_compliance_range=(4, 7),
+    target_compliance_range=(4.4, 5.9),
     target_safety_factor=3.0,
     output_dir="./",
 ):
     """Computes vascular graft compliance, distensibility, and safety factor.
 
-    Computes compliance (%/mmHg) and a linear pressure-diameter distensibility
-    slope from pressure-diameter test data, and (if burst pressure is
-    supplied) a mechanical safety factor, comparing both against target
-    values for a compliance-matched, mechanically safe graft.
+    Computes compliance (%/100mmHg, the conventional unit in the vascular
+    graft literature since typical pulse pressure is ~40 mmHg) and a linear
+    pressure-diameter distensibility slope from pressure-diameter test data,
+    and (if burst pressure is supplied) a mechanical safety factor, comparing
+    both against target values for a compliance-matched, mechanically safe
+    graft.
 
     Parameters
     ----------
@@ -199,8 +201,10 @@ def analyze_vascular_graft_mechanical_compliance(
         a mechanical safety factor (burst_pressure / systolic_pressure)
         (default: None)
     target_compliance_range : tuple of float, optional
-        Target compliance range for a compliance-matched graft, in %/mmHg
-        (default: (4, 7))
+        Target compliance range for a compliance-matched graft, in
+        %/100mmHg (default: (4.4, 5.9), spanning reported values for
+        saphenous vein (~4.4, the clinical gold-standard graft) to native
+        femoral artery (~5.9))
     target_safety_factor : float, optional
         Minimum acceptable ratio of burst pressure to systolic pressure
         (default: 3.0)
@@ -254,11 +258,17 @@ def analyze_vascular_graft_mechanical_compliance(
     if diameter_at_diastolic <= 0 or systolic_pressure <= diastolic_pressure:
         return "Error: Invalid pressure range or non-physical fitted diameter at diastolic pressure."
 
+    # Fractional diameter change per mmHg, expressed as %/100mmHg (the
+    # conventional unit in the vascular graft literature): one factor of 100
+    # converts the fractional strain to a percentage, the second rescales
+    # from "per 1 mmHg" to "per 100 mmHg" (typical pulse pressure ~40 mmHg,
+    # so "per mmHg" values are inconveniently small and not how compliance
+    # is reported in practice).
     compliance = (
         (diameter_at_systolic - diameter_at_diastolic)
         / diameter_at_diastolic
         / (systolic_pressure - diastolic_pressure)
-        * 100
+        * 1e4
     )
 
     compliance_pass = target_compliance_range[0] <= compliance <= target_compliance_range[1]
@@ -267,9 +277,9 @@ def analyze_vascular_graft_mechanical_compliance(
     log.append(f"Distensibility slope (dD/dP): {slope:.6f} mm/mmHg")
     log.append(f"Fitted diameter at diastolic pressure ({diastolic_pressure} mmHg): {diameter_at_diastolic:.3f} mm")
     log.append(f"Fitted diameter at systolic pressure ({systolic_pressure} mmHg): {diameter_at_systolic:.3f} mm")
-    log.append(f"Compliance: {compliance:.3f} %/mmHg")
+    log.append(f"Compliance: {compliance:.3f} %/100mmHg")
     log.append(
-        f"Target compliance range: {target_compliance_range[0]}-{target_compliance_range[1]} %/mmHg -> "
+        f"Target compliance range: {target_compliance_range[0]}-{target_compliance_range[1]} %/100mmHg -> "
         f"{'PASS' if compliance_pass else 'FAIL'}"
     )
 
@@ -459,7 +469,7 @@ def assess_graft_diameter_thrombosis_risk(
 
 def generate_multilayer_graft_design_report(
     layer_specs,
-    target_compliance_range=(4, 7),
+    target_compliance_range=(4.4, 5.9),
     target_safety_factor=3.0,
     simulation_weeks=52,
     output_dir="./",
@@ -483,8 +493,11 @@ def generate_multilayer_graft_design_report(
         (float), "thickness_um" (float), and optionally "materials" (str,
         free-text description of the layer's material composition)
     target_compliance_range : tuple of float, optional
-        Target compliance range for the overall graft, in %/mmHg, reported
-        in the design summary only (default: (4, 7))
+        Target compliance range for the overall graft, in %/100mmHg,
+        reported in the design summary only (not computed from data in this
+        function; see analyze_vascular_graft_mechanical_compliance)
+        (default: (4.4, 5.9), spanning saphenous vein (~4.4) to native
+        femoral artery (~5.9))
     target_safety_factor : float, optional
         Minimum acceptable combined mechanical-support safety factor,
         assumed to equal the safety factor at implantation (t=0) (default: 3.0)
@@ -578,7 +591,7 @@ def generate_multilayer_graft_design_report(
     report_lines.append("")
     report_lines.append("DESIGN TARGETS")
     report_lines.append("-" * 80)
-    report_lines.append(f"Target compliance range: {target_compliance_range[0]}-{target_compliance_range[1]} %/mmHg")
+    report_lines.append(f"Target compliance range: {target_compliance_range[0]}-{target_compliance_range[1]} %/100mmHg")
     report_lines.append(f"Target safety factor at implantation: {target_safety_factor}")
     report_lines.append("")
     report_lines.append("PROJECTED MECHANICAL SUPPORT TIMELINE")

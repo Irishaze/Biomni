@@ -54,8 +54,8 @@ description = [
                 "type": "float",
             },
             {
-                "default": "(4, 7)",
-                "description": "Target compliance range for a compliance-matched graft, in %/mmHg",
+                "default": "(4.4, 5.9)",
+                "description": "Target compliance range for a compliance-matched graft, in %/100mmHg (spans saphenous vein ~4.4 to native femoral artery ~5.9)",
                 "name": "target_compliance_range",
                 "type": "tuple of float",
             },
@@ -136,8 +136,8 @@ description = [
         "name": "generate_multilayer_graft_design_report",
         "optional_parameters": [
             {
-                "default": "(4, 7)",
-                "description": "Target compliance range for the overall graft, in %/mmHg, reported in the design summary only",
+                "default": "(4.4, 5.9)",
+                "description": "Target compliance range for the overall graft, in %/100mmHg, reported in the design summary only (spans saphenous vein ~4.4 to native femoral artery ~5.9)",
                 "name": "target_compliance_range",
                 "type": "tuple of float",
             },
