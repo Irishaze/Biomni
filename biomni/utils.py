@@ -848,6 +848,7 @@ def read_module2api():
         "biochemistry",
         "bioimaging",
         "bioengineering",
+        "vascular_biomaterials",
         "biophysics",
         "glycoengineering",
         "cancer_biology",
